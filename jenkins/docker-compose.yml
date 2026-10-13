@@ -1,0 +1,49 @@
+# Local Jenkins for running the project's Jenkinsfile.
+#
+# Jenkins talks to a separate Docker daemon (docker:dind), so the pipeline's
+# containers live inside it and never clash with the ones on your machine.
+# Both services share the jenkins-data volume, so bind mounts such as
+# ./message.sql resolve to the same path for Jenkins and for the daemon.
+
+services:
+  docker:
+    image: docker:dind
+    container_name: jenkins-docker
+    privileged: true
+    restart: unless-stopped
+    command: --storage-driver overlay2
+    environment:
+      DOCKER_TLS_CERTDIR: /certs
+    volumes:
+      - jenkins-docker-certs:/certs/client
+      - jenkins-data:/var/jenkins_home
+    networks:
+      jenkins:
+        aliases:
+          - docker
+
+  jenkins:
+    build: .
+    container_name: jenkins
+    restart: unless-stopped
+    depends_on:
+      - docker
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    environment:
+      DOCKER_HOST: tcp://docker:2376
+      DOCKER_CERT_PATH: /certs/client
+      DOCKER_TLS_VERIFY: "1"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - jenkins-docker-certs:/certs/client:ro
+    networks:
+      - jenkins
+
+volumes:
+  jenkins-data:
+  jenkins-docker-certs:
+
+networks:
+  jenkins:
