@@ -1,5 +1,3 @@
-# DevOps-Project-Automated-CI-CD-Pipeline
-
 # Two-Tier Flask App: Docker Compose + CI/CD
 
 [![CI](https://github.com/<your-username>/devops-two-tier-flask-app/actions/workflows/main.yml/badge.svg)](https://github.com/<your-username>/devops-two-tier-flask-app/actions/workflows/main.yml)
@@ -86,7 +84,26 @@ Both pipelines do the same thing:
 5. Tear everything down
 
 - **GitHub Actions**: [`.github/workflows/main.yml`](.github/workflows/main.yml), triggered on every push to `main`.
-- **Jenkins**: [`Jenkinsfile`](Jenkinsfile), for a local or self-hosted Jenkins agent that has Docker installed.
+- **Jenkins**: [`Jenkinsfile`](Jenkinsfile), runnable locally with the setup in [`jenkins/`](jenkins/).
+
+### Running the Jenkins pipeline locally
+
+Jenkins runs in Docker next to a separate Docker-in-Docker daemon, so nothing needs to be installed on your machine and the test stack never clashes with your own containers.
+
+```bash
+cd jenkins
+docker compose up -d --build
+
+# initial admin password
+docker compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+```
+
+1. Open http://localhost:8080, enter the password and install the suggested plugins.
+2. Create a new item of type **Pipeline**.
+3. Under *Pipeline*, choose **Pipeline script from SCM**, set SCM to Git, enter this repository's URL, branch `*/main`, and script path `Jenkinsfile`.
+4. Save and click **Build Now**.
+
+Stop it with `docker compose down` (add `-v` to also delete Jenkins' data).
 
 ## Design decisions
 
@@ -108,6 +125,9 @@ This is a learning project, so a few things are intentionally left out:
 ```text
 .
 ├── .github/workflows/main.yml   # GitHub Actions pipeline
+├── jenkins/                     # Local Jenkins (Docker) for running the Jenkinsfile
+│   ├── Dockerfile
+│   └── docker-compose.yml
 ├── templates/index.html         # UI
 ├── .env.example                 # Environment variable template
 ├── .gitignore
