@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Create .env from template
+        # .env is git-ignored, so CI builds it from the example file.
+        # These are throwaway credentials for a short-lived test stack.
+        run: cp .env.example .env
+
+      - name: Validate Compose file
+        run: docker compose config
+
+      - name: Build and start containers
+        run: docker compose up -d --build
+
+      - name: Wait for /health
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:5000/health; then
+              echo
+              echo "App is healthy"
+              exit 0
+            fi
+            echo "Waiting for app... ($i/30)"
+            sleep 5
+          done
+          echo "App did not become healthy in time"
+          exit 1
+
+      - name: Check that the home page renders (app + database + template)
+        run: curl -fsS http://localhost:5000/ > /dev/null
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
