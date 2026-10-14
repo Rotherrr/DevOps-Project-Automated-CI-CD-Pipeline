@@ -172,7 +172,3 @@ This is a learning project, so a few things are intentionally left out:
 - **Edits to `message.sql` have no effect**: init scripts only run on an empty database. Run `docker compose down -v` and start again.
 - **`Access denied` from MySQL**: the credentials in `.env` must match the ones the database was first created with. After changing them, remove the volume as above.
 - **Jenkins says it can't find the `Jenkinsfile`**: the file has to be committed and pushed to the branch the job builds, because Jenkins reads it from GitHub, not from your disk.
-
-## Author
-
-<Your Name> · [GitHub](https://github.com/Rotherrr) · [LinkedIn](https://www.linkedin.com/in/<your-profile>)
